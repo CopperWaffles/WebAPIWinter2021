@@ -1,4 +1,54 @@
 var socket = io()
+
+    //SIGN IN CODE===========================
+    var signDiv = document.getElementById('signInDiv')
+    var signDivUsername = document.getElementById('signInDiv-username')
+    var signDivSignIn = document.getElementById('signInDiv-signIn')
+    var signDivSignUp = document.getElementById('signInDiv-signUp')
+    var signDivPassword = document.getElementById('signInDiv-password')
+    var gameDiv = document.getElementById('gameDiv')
+    var error = document.getElementById('err')
+
+    //event listeners for sign in butons
+    signDivSignIn.onclick = function()
+    {
+        socket.emit('signIn', {username:signDivUsername.value, password:signDivPassword.value})
+    }
+    signDivSignUp.onclick = function()
+    {
+        socket.emit('signUp', {username:signDivUsername.value, password:signDivPassword.value})
+    }
+
+    socket.on('signInResponse', function(data)
+    {
+        if(data.success)
+        {
+            //log user in
+            signDiv.style.display = "none"
+            gameDiv.style.display = "inline-block"
+        }else
+        {
+            //alert("Sign in Unsuccessful")
+            error.innerHTML = "Sign in Unsuccessful"
+        }
+       
+    })
+
+    socket.on('signUpResponse', function(data)
+    {
+        if(data.success)
+        {
+            error.innerHTML = "Sign up successful, please log in"
+
+        }else
+        {
+            //alert("Sign in Unsuccessful")
+            error.innerHTML = "Sign up Unsuccessful"
+        }
+       
+    })
+
+    //GAME RELATED CODE=====================
     var canvas = document.getElementById('canvas')
     var ctx = canvas.getContext("2d")
     var chatText= document.getElementById('chat-text')
@@ -60,7 +110,7 @@ var socket = io()
             ctx.fillText(data.player[i].number, data.player[i].x, data.player[i].y)
         }
         for(var i=0; i<data.bullet.length;i++){
-            ctx.fillRect(data.bullet[i].x, data.bullet[i].y, 10,10)
+            ctx.fillRect(data.bullet[i].x+5, data.bullet[i].y-15, 10,10)
         }
     })
 

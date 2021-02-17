@@ -2,9 +2,14 @@
 const e = require('express')
 var express = require('express')
 var app = express()
+var mongoose = require('mongoose')
 var serv = require('http').Server(app)
 var io = require('socket.io')(serv,{})
 var debug = true
+require('./db')
+require('./models/Player')
+
+var PlayerData = mongoose.model('player')
 
 //file comms
 app.get('/',function(req,res)
@@ -229,6 +234,30 @@ Bullet.update = function()
     }
     return pack
 }
+//==============User collection setuup
+var Players = {
+    "Matt":"123",
+    "Tyler":"asd",
+    "Bob":"321",
+    "Hans":"qwe",
+}
+
+var isPasswordValid = function(data)
+{
+    console.log(PlayerData.findOne({username:data.username}))
+    //return Players[data.username] === data.password
+}
+
+var isUsernameTaken = function(data)
+{
+    return Players[data.username]
+}
+
+var addUser = function(data)
+{
+    //Players[data.username] = data.password
+    new PlayerData(data).save()
+}
 
 //Connection to game
 io.sockets.on('connection', function(socket)
@@ -242,8 +271,30 @@ io.sockets.on('connection', function(socket)
 
     //add to list
     SocketList[socket.id] = socket
-    Player.onConnect(socket)
+    
    
+    //sign in event
+    socket.on('signIn', function (data) {
+        if(isPasswordValid(data)) {
+            Player.onConnect(socket)
+            socket.emit('connected', socket.id)
+            socket.emit('signInResponse',{success:true})
+        }else
+        {
+            socket.emit('signInResponse',{success:false})
+        }
+    })
+
+    //sign up event
+    socket.on('signUp', function(data){
+       if(isUsernameTaken(data))
+       {
+           socket.emit('signUpResponse',{success:false})
+       }else{
+           addUser(data)
+           socket.emit('signUpResponse',{success:true})
+       }
+    })
 
     //diconnect event
     socket.on('disconnect', function(){
